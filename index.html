@@ -1,0 +1,1673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude Accelerator — Judging Tool</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&family=Roboto+Serif:opsz,wght@8..144,400;8..144,500;8..144,600;8..144,700&display=swap');
+
+  :root {
+    /* PI Design System tokens — light theme */
+    --bg: #F2F1F3;
+    --surface: #FFFFFF;
+    --surface-raised: #FAFAFB;
+    --border: #E2DFE6;
+    --border-light: #D3D0D8;
+    --border-strong: #B7B2BD;
+    --text: #24133E;
+    --text-muted: #615574;
+    --text-dim: #8B7F9B;
+
+    --accent-surprise: #B8830B;
+    --accent-surprise-bg: rgba(255, 190, 24, 0.16);
+    --accent-surprise-dot: #FFBE18;
+    --accent-classic: #047857;
+    --accent-classic-bg: rgba(0, 204, 131, 0.13);
+    --accent-classic-dot: #00CC83;
+    --accent-collab: #5000A8;
+    --accent-collab-bg: rgba(80, 0, 168, 0.09);
+    --accent-collab-dot: #5000A8;
+    --accent-writein: #615574;
+    --accent-writein-bg: rgba(36, 19, 62, 0.06);
+
+    --star: #B8830B;
+    --radius-sm: 8px;
+    --radius: 12px;
+    --radius-lg: 16px;
+
+    --shadow-card: 0 1px 2px rgba(36, 19, 62, 0.04), 0 2px 8px rgba(36, 19, 62, 0.04);
+    --shadow-card-hover: 0 1px 2px rgba(36, 19, 62, 0.06), 0 4px 16px rgba(36, 19, 62, 0.08);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { font-size: 16px; }
+
+  body {
+    font-family: 'Roboto', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.55;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .container {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 56px 24px 140px;
+  }
+
+  /* ---- ONBOARDING ---- */
+  .onboarding-overlay {
+    position: fixed; inset: 0;
+    background: rgba(36, 19, 62, 0.55);
+    z-index: 200;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+  }
+  .onboarding-overlay.hidden { display: none; }
+
+  .onboarding-box {
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    padding: 40px;
+    max-width: 440px; width: 100%;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(36, 19, 62, 0.25);
+  }
+
+  .onboarding-box h2 {
+    font-family: 'Roboto Serif', serif;
+    font-size: 26px; font-weight: 700;
+    margin-bottom: 8px;
+    color: var(--text);
+  }
+
+  .onboarding-box p {
+    font-size: 15px; color: var(--text-muted);
+    margin-bottom: 24px; line-height: 1.5;
+  }
+
+  .onboarding-input {
+    font-family: 'Roboto', sans-serif;
+    font-size: 17px;
+    width: 100%;
+    padding: 14px 18px;
+    border-radius: var(--radius);
+    border: 2px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    outline: none;
+    margin-bottom: 16px;
+    text-align: center;
+    transition: border-color 0.15s;
+  }
+  .onboarding-input::placeholder { color: var(--text-dim); }
+  .onboarding-input:focus { border-color: var(--accent-collab); }
+
+  .onboarding-btn {
+    font-family: 'Roboto', sans-serif;
+    font-size: 15px; font-weight: 600;
+    padding: 14px 36px;
+    border-radius: 100px;
+    border: none;
+    background: var(--accent-collab);
+    color: #fff;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.05s;
+  }
+  .onboarding-btn:hover { opacity: 0.9; }
+  .onboarding-btn:active { transform: scale(0.98); }
+  .onboarding-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* ---- HEADER ---- */
+  .header {
+    margin-bottom: 32px;
+  }
+
+  .header-eyebrow {
+    font-size: 12px; font-weight: 600;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 12px;
+  }
+
+  .header h1 {
+    font-family: 'Roboto Serif', serif;
+    font-size: 36px; font-weight: 700;
+    line-height: 1.15;
+    margin-bottom: 8px;
+    letter-spacing: -0.01em;
+  }
+
+  .header-subtitle {
+    color: var(--text-muted);
+    font-size: 16px;
+    line-height: 1.5;
+    max-width: 600px;
+  }
+
+  .header-meta-row {
+    display: flex; align-items: center; gap: 16px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+  }
+
+  .judge-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 14px; font-weight: 600;
+    padding: 8px 16px;
+    border-radius: 100px;
+    background: var(--accent-collab-bg);
+    color: var(--accent-collab);
+  }
+
+  .judge-badge::before {
+    content: '';
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent-collab);
+  }
+
+  .switch-judge-btn {
+    font-family: 'Roboto', sans-serif;
+    font-size: 13px; font-weight: 500;
+    padding: 6px 14px;
+    border-radius: 100px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .switch-judge-btn:hover {
+    border-color: var(--border-strong);
+    color: var(--text);
+    background: var(--surface);
+  }
+
+  .save-indicator {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-left: auto;
+    transition: opacity 0.3s;
+  }
+
+  .save-indicator.flash {
+    color: var(--accent-classic);
+  }
+
+  .save-indicator-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--accent-classic-dot);
+  }
+
+  .save-indicator.saving .save-indicator-dot {
+    background: var(--text-dim);
+    animation: pulse 1s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; }
+  }
+
+  /* Progress bar */
+  .progress-section {
+    margin-top: 24px;
+    padding: 20px;
+    background: var(--surface);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+  }
+
+  .progress-row {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 12px;
+    flex-wrap: wrap; gap: 8px;
+  }
+
+  .progress-label {
+    font-size: 14px; font-weight: 600;
+    color: var(--text);
+  }
+
+  .progress-stat {
+    font-size: 14px;
+    color: var(--text-muted);
+  }
+
+  .progress-stat strong {
+    color: var(--text);
+    font-weight: 700;
+  }
+
+  .progress-bar {
+    height: 8px;
+    background: var(--bg);
+    border-radius: 100px;
+    overflow: hidden;
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-collab) 0%, #7B3FD9 100%);
+    border-radius: 100px;
+    transition: width 0.4s ease;
+  }
+
+  .legend {
+    display: flex; gap: 20px; flex-wrap: wrap;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+
+  .legend-item {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13px; font-weight: 500;
+    color: var(--text-muted);
+  }
+
+  .legend-dot {
+    width: 12px; height: 12px; border-radius: 50%;
+  }
+
+  /* ---- FILTERS ---- */
+  .filters {
+    display: flex; gap: 8px; flex-wrap: wrap;
+    margin-bottom: 24px;
+  }
+
+  .filter-btn {
+    font-family: 'Roboto', sans-serif;
+    font-size: 14px; font-weight: 500;
+    padding: 10px 18px;
+    border-radius: 100px;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+  }
+  .filter-btn:hover { border-color: var(--border-strong); color: var(--text); }
+  .filter-btn.active { border-color: var(--text); color: var(--text); background: var(--surface); font-weight: 600; }
+  .filter-btn.active[data-filter="surprise"] { border-color: var(--accent-surprise); color: var(--accent-surprise); background: var(--accent-surprise-bg); }
+  .filter-btn.active[data-filter="classic"] { border-color: var(--accent-classic); color: var(--accent-classic); background: var(--accent-classic-bg); }
+  .filter-btn.active[data-filter="collab"] { border-color: var(--accent-collab); color: var(--accent-collab); background: var(--accent-collab-bg); }
+  .filter-btn.active[data-filter="writein"] { border-color: var(--text); color: var(--text); background: var(--accent-writein-bg); }
+
+  /* ---- TOOLBAR ---- */
+  .toolbar {
+    display: flex; gap: 8px; flex-wrap: wrap;
+    margin-bottom: 24px;
+    padding: 12px 16px;
+    background: var(--surface);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    align-items: center;
+  }
+
+  .toolbar-label {
+    font-size: 12px; font-weight: 600;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-right: 4px;
+  }
+
+  .toolbar-btn {
+    font-family: 'Roboto', sans-serif;
+    font-size: 13px; font-weight: 600;
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .toolbar-btn:hover {
+    border-color: var(--border-strong);
+    color: var(--text);
+    background: var(--surface-raised);
+  }
+
+  #importFile { display: none; }
+
+  /* ---- CARDS ---- */
+  .grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    position: relative;
+    contain: layout style;
+    box-shadow: var(--shadow-card);
+  }
+  .card:hover { box-shadow: var(--shadow-card-hover); }
+  .card.you-voted { border-color: var(--accent-collab); }
+  .card.you-voted::before {
+    content: '✓ Voted';
+    position: absolute;
+    top: 16px; right: 16px;
+    font-size: 11px; font-weight: 700;
+    color: var(--accent-collab);
+    background: var(--accent-collab-bg);
+    padding: 4px 10px;
+    border-radius: 100px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .rank-badge {
+    position: absolute;
+    top: 20px; right: 20px;
+    font-family: 'Roboto Serif', serif;
+    font-size: 16px; font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 100px;
+    background: var(--text);
+    color: var(--surface);
+  }
+  .card.you-voted .rank-badge {
+    top: 48px;
+  }
+
+  .card-meta {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 12px; font-weight: 600;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 8px;
+  }
+
+  .card-day {
+    background: var(--bg);
+    color: var(--text-muted);
+    padding: 3px 10px;
+    border-radius: 100px;
+    font-weight: 700;
+  }
+
+  .card-title {
+    font-family: 'Roboto Serif', serif;
+    font-size: 22px; font-weight: 600;
+    line-height: 1.25;
+    color: var(--text);
+    margin-bottom: 16px;
+    padding-right: 80px;
+  }
+
+  .card-section {
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--text-muted);
+    margin-bottom: 14px;
+  }
+
+  .card-section-label {
+    display: block;
+    font-size: 11px; font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+
+  /* ---- VOTE PANEL ---- */
+  .vote-panel {
+    margin: 20px -28px 0;
+    padding: 20px 28px;
+    background: var(--bg);
+    border-top: 1px solid var(--border);
+    border-radius: 0 0 var(--radius) var(--radius);
+  }
+
+  .vote-panel-label {
+    display: block;
+    font-size: 11px; font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-dim);
+    margin-bottom: 12px;
+  }
+
+  .superlative-picker {
+    display: flex; gap: 8px; flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+
+  .superlative-btn {
+    font-family: 'Roboto', sans-serif;
+    font-size: 14px; font-weight: 600;
+    padding: 10px 18px;
+    border-radius: 100px;
+    border: 1.5px solid var(--border-light);
+    background: var(--surface);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.12s ease;
+    white-space: nowrap;
+  }
+  .superlative-btn:hover {
+    border-color: var(--border-strong);
+    color: var(--text);
+    transform: translateY(-1px);
+  }
+  .superlative-btn:active { transform: translateY(0); }
+
+  .superlative-btn.selected[data-sup="surprise"] {
+    background: var(--accent-surprise-bg);
+    border-color: var(--accent-surprise);
+    color: var(--accent-surprise);
+  }
+  .superlative-btn.selected[data-sup="classic"] {
+    background: var(--accent-classic-bg);
+    border-color: var(--accent-classic);
+    color: var(--accent-classic);
+  }
+  .superlative-btn.selected[data-sup="collab"] {
+    background: var(--accent-collab-bg);
+    border-color: var(--accent-collab);
+    color: var(--accent-collab);
+  }
+  .superlative-btn.selected[data-sup="writein"] {
+    background: var(--accent-writein-bg);
+    border-color: var(--accent-writein);
+    color: var(--text);
+  }
+
+  /* Stars */
+  .star-row {
+    display: flex; align-items: center; gap: 12px;
+  }
+
+  .star-row-label {
+    font-size: 13px; font-weight: 600;
+    color: var(--text-muted);
+    margin-right: 4px;
+  }
+
+  .star-rating {
+    display: flex; align-items: center; gap: 2px;
+  }
+
+  .star-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    font-size: 28px;
+    line-height: 1;
+    color: var(--border-strong);
+    transition: color 0.1s, transform 0.05s;
+  }
+  .star-btn:hover { transform: scale(1.18); }
+  .star-btn:active { transform: scale(1.05); }
+  .star-btn.filled { color: var(--star); }
+
+  .clear-btn {
+    font-family: 'Roboto', sans-serif;
+    font-size: 12px; font-weight: 500;
+    padding: 6px 12px;
+    border-radius: 100px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text-dim);
+    cursor: pointer;
+    margin-left: auto;
+    transition: all 0.15s;
+  }
+  .clear-btn:hover { color: var(--text); border-color: var(--border-light); }
+
+  /* Write-in input */
+  .writein-input-row {
+    display: flex; align-items: center; gap: 8px;
+    margin-top: 12px;
+    padding: 10px 14px;
+    background: var(--surface);
+    border: 1.5px solid var(--accent-collab);
+    border-radius: 100px;
+    width: 100%;
+  }
+
+  .writein-input {
+    font-family: 'Roboto', sans-serif;
+    font-size: 14px;
+    flex: 1;
+    border: none;
+    background: transparent;
+    color: var(--text);
+    outline: none;
+    padding: 4px 8px;
+    min-width: 0;
+  }
+  .writein-input::placeholder { color: var(--text-dim); }
+
+  .writein-submit-btn, .writein-cancel-btn {
+    font-family: 'Roboto', sans-serif;
+    font-size: 13px; font-weight: 600;
+    padding: 6px 14px;
+    border-radius: 100px;
+    border: none;
+    cursor: pointer;
+    transition: opacity 0.15s;
+    flex-shrink: 0;
+  }
+  .writein-submit-btn {
+    background: var(--accent-collab);
+    color: #fff;
+  }
+  .writein-submit-btn:hover { opacity: 0.9; }
+  .writein-cancel-btn {
+    background: transparent;
+    color: var(--text-dim);
+  }
+  .writein-cancel-btn:hover { color: var(--text); }
+
+  /* ---- VOTERS ROW ---- */
+  .voters-row {
+    display: flex; align-items: center; gap: 12px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+
+  .voters-circles {
+    display: flex; align-items: center;
+  }
+
+  .voter-circle {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700;
+    border: 2px solid var(--surface);
+    margin-left: -6px;
+    text-transform: uppercase;
+    box-shadow: 0 1px 3px rgba(36, 19, 62, 0.1);
+    cursor: default;
+  }
+  .voter-circle:first-child { margin-left: 0; }
+  .voter-circle[data-sup="surprise"] { background: var(--accent-surprise-dot); color: #fff; }
+  .voter-circle[data-sup="classic"] { background: var(--accent-classic-dot); color: #fff; }
+  .voter-circle[data-sup="collab"] { background: var(--accent-collab-dot); color: #fff; }
+  .voter-circle[data-sup="writein"] { background: var(--text); color: #fff; }
+  .voter-circle.you { box-shadow: 0 0 0 2px var(--accent-collab), 0 1px 3px rgba(36, 19, 62, 0.1); }
+
+  .voters-summary {
+    font-size: 14px;
+    color: var(--text-muted);
+  }
+
+  .voters-summary strong {
+    color: var(--text);
+    font-weight: 700;
+  }
+
+  .voters-empty {
+    font-size: 14px;
+    color: var(--text-dim);
+    font-style: italic;
+  }
+
+  /* ---- CONSENSUS RESULTS ---- */
+  .consensus {
+    display: flex; flex-direction: column; gap: 8px;
+    margin-top: 12px;
+  }
+
+  .consensus-row {
+    display: flex; align-items: center; gap: 12px;
+    font-size: 14px;
+    flex-wrap: wrap;
+  }
+
+  .consensus-tag {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 13px; font-weight: 600;
+    padding: 5px 12px;
+    border-radius: 100px;
+    flex-shrink: 0;
+  }
+
+  .consensus-tag[data-sup="surprise"] {
+    background: var(--accent-surprise-bg);
+    color: var(--accent-surprise);
+  }
+  .consensus-tag[data-sup="classic"] {
+    background: var(--accent-classic-bg);
+    color: var(--accent-classic);
+  }
+  .consensus-tag[data-sup="collab"] {
+    background: var(--accent-collab-bg);
+    color: var(--accent-collab);
+  }
+  .consensus-tag[data-sup="writein"] {
+    background: var(--accent-writein-bg);
+    color: var(--text);
+  }
+
+  .consensus-stats {
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  .consensus-stats strong {
+    color: var(--text);
+    font-weight: 700;
+  }
+
+  .consensus-judges {
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+
+  /* ---- SECTION DIVIDERS ---- */
+  .section-label {
+    font-family: 'Roboto Serif', serif;
+    font-size: 16px; font-weight: 600;
+    color: var(--text);
+    margin: 32px 0 12px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--text);
+    display: inline-block;
+  }
+  .section-label:first-of-type { margin-top: 0; }
+
+  /* ---- BOTTOM BAR ---- */
+  .bottom-bar {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding: 16px 24px;
+    z-index: 100;
+    display: none;
+    box-shadow: 0 -4px 20px rgba(36, 19, 62, 0.06);
+  }
+  .bottom-bar.visible { display: block; }
+
+  .bottom-bar-inner {
+    max-width: 880px; margin: 0 auto;
+    display: flex; align-items: center; gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .bottom-bar-label {
+    font-size: 12px; font-weight: 700;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    flex-shrink: 0;
+  }
+
+  .bottom-bar-judges { display: flex; gap: 6px; flex-wrap: wrap; }
+
+  .judge-chip {
+    font-size: 13px; font-weight: 600;
+    padding: 6px 14px;
+    border-radius: 100px;
+    background: var(--accent-collab-bg);
+    color: var(--accent-collab);
+  }
+  .judge-chip.you {
+    background: var(--accent-collab);
+    color: #fff;
+  }
+
+  .loading-state {
+    text-align: center; padding: 80px 24px;
+    color: var(--text-dim); font-size: 16px;
+  }
+
+  /* ---- RESPONSIVE ---- */
+  @media (max-width: 640px) {
+    .container { padding: 32px 16px 140px; }
+    .header h1 { font-size: 28px; }
+    .header-subtitle { font-size: 15px; }
+    .card { padding: 20px; }
+    .card-title { font-size: 19px; padding-right: 70px; }
+    .vote-panel { margin: 16px -20px 0; padding: 16px 20px; }
+    .superlative-btn { font-size: 13px; padding: 9px 14px; }
+    .star-btn { font-size: 26px; }
+    .legend { gap: 14px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="onboarding-overlay" id="onboarding">
+  <div class="onboarding-box">
+    <h2 id="onboardingTitle">Judging Tool</h2>
+    <p id="onboardingMsg">Enter your first name so the team can see who voted for what. Votes sync across all judges.</p>
+    <input class="onboarding-input" id="nameInput" type="text" placeholder="Your first name" maxlength="20" autofocus />
+    <br>
+    <button class="onboarding-btn" id="nameSubmit" disabled>Start judging</button>
+  </div>
+</div>
+
+<div class="container">
+  <div class="header">
+    <div class="header-eyebrow">Claude Accelerator · April 30 – May 1</div>
+    <h1>Build Competition — Judging Tool</h1>
+    <p class="header-subtitle">For each build, pick a superlative and rate it 1–5 stars. Rankings combine vote count + average rating per category.</p>
+    <div class="header-meta-row" id="judgeRow"></div>
+
+    <div class="progress-section" id="progressSection" style="display:none;">
+      <div class="progress-row">
+        <span class="progress-label">Your progress</span>
+        <span class="progress-stat"><strong id="progressVoted">0</strong> of <strong id="progressTotal">41</strong> builds judged</span>
+      </div>
+      <div class="progress-bar"><div class="progress-bar-fill" id="progressFill" style="width:0%;"></div></div>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background: var(--accent-surprise-dot);"></div>🏆 Most Surprising</div>
+        <div class="legend-item"><div class="legend-dot" style="background: var(--accent-classic-dot);"></div>🔁 Instant Classic</div>
+        <div class="legend-item"><div class="legend-dot" style="background: var(--accent-collab-dot);"></div>🤝 Best Collaborative Energy</div>
+        <div class="legend-item"><div class="legend-dot" style="background: var(--text);"></div>✍️ Write-in</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="filters" id="filters">
+    <button class="filter-btn active" data-filter="all">All builds</button>
+    <button class="filter-btn" data-filter="surprise">🏆 Most Surprising</button>
+    <button class="filter-btn" data-filter="classic">🔁 Instant Classic</button>
+    <button class="filter-btn" data-filter="collab">🤝 Collaborative Energy</button>
+    <button class="filter-btn" data-filter="writein">✍️ Write-ins</button>
+    <button class="filter-btn" data-filter="my-votes">My votes</button>
+    <button class="filter-btn" data-filter="thu">Thu only</button>
+    <button class="filter-btn" data-filter="fri">Fri only</button>
+  </div>
+
+  <div class="toolbar">
+    <span class="toolbar-label">Backup</span>
+    <button class="toolbar-btn" id="exportBtn" title="Download all votes as JSON">⬇ Export</button>
+    <button class="toolbar-btn" id="importBtn" title="Restore votes from JSON">⬆ Import</button>
+    <input type="file" id="importFile" accept="application/json,.json" />
+    <span style="margin-left:auto; font-size:13px; color:var(--text-dim);">
+      <strong id="visibleCount">41</strong> shown · <strong id="totalRatings">0</strong> ratings · <strong id="judgeCount">0</strong> judges
+    </span>
+  </div>
+
+  <div id="loadingState" class="loading-state">Loading…</div>
+  <div class="grid" id="grid"></div>
+</div>
+
+<div class="bottom-bar" id="bottomBar">
+  <div class="bottom-bar-inner">
+    <div class="bottom-bar-label">Judges</div>
+    <div class="bottom-bar-judges" id="judgeChips"></div>
+  </div>
+</div>
+
+<script>
+const builds = [
+  { id:1, title:"Pregnancy Lunch Ordering Skill", author:"Jess", day:"thu", problem:"Decision fatigue during pregnancy — didn't want to think about what to order for lunch every day.", solution:"Built a semi-autonomous Claude skill (her first skill ever) in about 30 minutes. At lunchtime she opens Claude, says 'order me lunch,' and the skill triggers, opens DoorDash, and places an order centered on pregnancy-safe foods and nutrition guidelines." },
+  { id:2, title:"AI-Powered PRSP Assistant", author:"Mike", day:"thu", problem:"Engineers had to manually hunt for known data-remediation solutions and piece together Slack conversations tracking an issue from User Ops to Engineering.", solution:"Built a tool that looks up known solutions for any client-reported issue and automatically surfaces all related Slack conversations for a given PRSP. Mike was already using it in his daily routine by Friday morning." },
+  { id:3, title:"Workshop Order Daily Report", author:"Lauren", day:"thu", problem:"Daily manual process identifying workshop order records that need updating before they can be marked fulfilled — complicated by two systems (Salesforce + NetSuite) and three billing scenarios (materials, shipping, combinations).", solution:"Built a daily report that automatically identifies which records need attention, replacing manual cross-referencing across both systems." },
+  { id:4, title:'"ask-jAIson" + Onboarding/Offboarding Portal', author:"Jason", day:"thu", problem:"Level 1 support for Pioneers requires answering repetitive questions; onboarding and offboarding is a fragmented process across teams and tools.", solution:'Launched "ask-jAIson," a self-help portal for Pioneers, and started a unified PI onboarding/offboarding portal to consolidate the fragmented process.' },
+  { id:5, title:"DataDog Alerts Triage Workflow", author:"Dan", day:"thu", problem:"Engineers responding to DataDog alerts had to read through every log line themselves to understand what was happening.", solution:"Built a workflow that reads related logs, groups errors by what actually correlates them, and posts a one-pager directly to the alert thread covering investigation summary, likely root cause, and suggested next steps." },
+  { id:6, title:"Slack Channel Solution Categorizer", author:"Kiki", day:"thu", problem:"Solutions posted in a Slack channel weren't being properly categorized, making them hard to find later.", solution:"Pointed Claude at the channel to auto-categorize solutions as they're posted. Was actively debugging categorization accuracy at showcase time." },
+  { id:7, title:"Translation Key Email Previewer", author:"Lida", day:"thu", problem:"No live way to preview email changes when working with HTML body and header translation keys.", solution:"Created an interactive previewer where you can plug in HTML body/header text and see updates live. Plans to move it to PIT (dev) for broader team use." },
+  { id:8, title:"Deal Review & Risk Identifier", author:"Stephanie", day:"thu", problem:"Sales leaders needed a consistent way to review deal health and identify risk across the team.", solution:"Built a deal review tool based on PI's sales criteria and MEDDIC methodology. Sends a digestible report to Slack every morning for the whole team and doubles as a working reference table." },
+  { id:9, title:"Weekly Prospect Email Performance Report", author:"Bridget", day:"thu", problem:"No automated way to analyze email campaign performance and generate a clear action plan.", solution:"Building a weekly report that analyzes the prior week's campaign data and outputs follow-up suggestions, edits to existing comms, and segment clean-up. Some manual effort required while HubSpot email metrics aren't fully accessible." },
+  { id:10, title:"Event Lead Attribution & Routing Tool", author:"Kara", day:"thu", problem:"After Perspectives Webinars, HRCI webinars, and external events, CSV files of attendees need data cleanup, lead attribution, and routing (to HubSpot as marketing leads or as MQLs routed to Direct or Partners).", solution:"Building a tool that ingests one or more CSVs, cleans the data, appends lead attribution and routing logic, and pushes the cleaned list to a new CSV or directly into HubSpot." },
+  { id:11, title:"Project Kickoff Learnings Synthesis", author:"Taylor", day:"thu", problem:"Starting a new problem space requires manually querying Enterpret, Pendo, and LogRocket to understand pain points and opportunities.", solution:"Started building a multi-source synthesis tool to pull insights into a Miro board. Hit walls with Miro MCP and artifact-to-MCP connectivity; pivoted to building a replicable workflow skill instead." },
+  { id:12, title:"Network Newsletter Automation", author:"Sarah", day:"thu", problem:"Partner marketing has to manually map raw newsletter content to HubSpot template structure.", solution:"Building a Claude-powered tool where partners paste raw content and image URLs, Claude formats it to match the HubSpot template structure, and it gets pushed via HubSpot's API automatically." },
+  { id:13, title:'"BI Assistant"', author:"Becky", day:"thu", problem:"Partner and case managers frequently ask BI-related questions that require finding answers from years of accumulated team knowledge.", solution:"Built a Claude artifact where users paste a partner email or case message and it pulls answers from a knowledge base built from 3 years of team responses. Supports follow-up questions across up to 3 turns, includes thumbs up/down feedback, and has an Admin panel for the BI team to monitor answer quality." },
+  { id:14, title:"Community Listening Tool", author:"Jess", day:"thu", problem:"No centralized way to track conversations about PI across the web (Reddit, X, LinkedIn, podcasts, news outlets) to inform product direction and messaging.", solution:"Built an artifact that aggregates web conversations into trends. Currently exploring whether an interactive HTML file would be a better delivery format than the artifact." },
+  { id:15, title:"Customizable Sales Deck Generator", author:"Tara", day:"thu", problem:"AEs need to build custom, relevant business cases for prospects but it's time-consuming to create them from scratch.", solution:"Building a tool where AEs input prospect details (call transcripts, Salesforce links, company logos) and Claude generates a polished, shareable deck tailored to the problems PI can solve — ready for prospects to share internally." },
+  { id:16, title:"PI-Based Team Reorganization Visual", author:"Rob", day:"thu", problem:"Companies struggle with how to restructure departments using PI behavioral data.", solution:"Had Claude design a visual concept for a tool that can reorganize a department or company into teams using PI Design and PI Assistant." },
+  { id:17, title:"Automated Expense Report Builder", author:"Chris", day:"thu", problem:"Creating monthly expense reports is a manual, error-prone context switch.", solution:"Built a Claude Computer Use automation that creates the expense report, resolves errors as they come up, and verifies the total matches the posted amount. Deliberately stops short of auto-submitting so there's still a human review step." },
+  { id:18, title:"Product Demo Extractor & Repository", author:"Sonia", day:"thu", problem:"Product, Design, and Engineering demos are scattered across Zoom recordings with no easy way to find a specific demo without watching entire recordings.", solution:"Building a tool that ingests a Zoom recording, extracts timestamped demos into a reference doc, and works toward a searchable repository of recordings." },
+  { id:19, title:"PI Assistant Prompt Quality Testing Dashboard", author:"Andrew", day:"thu", problem:"When the PI Assistant prompt updates, testing all quick starts from every page type is time-consuming and manual.", solution:"Building a 3-part system: (1) automation that runs all quick starts from each entry point and collects responses, (2) grading rubric dashboard that scores responses on context usage, accuracy, actionability, relevance, tone & clarity, and format, and (3) a list of recommendations convertible into tickets." },
+  { id:20, title:'"Facet" Cowork Plugin', author:"Chris E.", day:"thu", problem:"Venturers and context-switchers lose momentum moving between Jira, Slack, Calendar, and email.", solution:"Built a Cowork plugin that connects to all four tools and synthesizes a daily brief scoped to what the user cares about. Includes an interactive checklist artifact with leverage scoring, a gamified gemstone that gets more polished as items are completed, and a quick-log command for capturing updates by voice." },
+  { id:21, title:'"H2 Discovery Machine"', author:"Brendan", day:"thu", problem:"The H2 discovery process — turning customer signal into testable hypotheses — is slow and inconsistent.", solution:"Built a 6-checkpoint machine that pulls from Enterpret, Pendo, Slack, Zoom, Guru, and PI Assistant to produce 10+ locked test plans per week. Each checkpoint surfaces options for a PM reviewer: problem/buyer pair selection, journey mapping, solution ideation, riskiest assumption ID, hypothesis drafting, and filing/booking." },
+  { id:22, title:"Integration Message Processing Dashboard", author:"Matt", day:"thu", problem:"Daily triage of integrated clients' message processing is slow — hard to tell if an error is PI-side vs. client-side.", solution:"Built a dashboard providing high-level visibility into ongoing trends and specific impacted clients to quickly determine whether to triage further or treat errors as ignorable noise." },
+  { id:23, title:"Client Recruitment & Research Automation", author:"Sarah", day:"thu", problem:"The pool of clients available for continuous discovery research is too small, and recruitment is manual.", solution:"Building an automation that sources eligible clients from Salesforce with customizable filters, then handles screening and correspondence automatically." },
+  { id:24, title:"Deferred Revenue Workshop Tracking Dashboard", author:"Kerrin", day:"thu", problem:"Tracking deferred revenue from workshops was a manual monthly process involving Excel, cross-referencing multiple Salesforce reports, and pulling fields like product code and cost-per-participant.", solution:"Built a dashboard to accurately track open workshop credits, cross-reference them against Salesforce redemption data, and automate a previously tedious month-end process." },
+  { id:25, title:"PI Pro Bono Eligibility Review Tool", author:"Amanda", day:"thu", problem:"Pro Bono eligibility reviews are a bottleneck — manual research across five criteria, with everything stalling when the one person who does them is unavailable.", solution:"Built a tool that walks through all five criteria (nonprofit status, mission alignment, headcount, affiliation, social standing), flags edge cases with the right exception language, and generates a loggable recommendation. Empowers any UO team member to run a review independently, learns from exceptions over time, and serves as a template for other manual reviews." },
+  { id:26, title:"Go/No-Go Upgrade Readiness Generator", author:"Caitlin", day:"thu", problem:"Weekly upgrade readiness checks require manually pulling upcoming scheduled clients and coordinating with the right people.", solution:"Built an automation that pulls scheduled clients for the following Tuesday's upgrade, gets cohort names, and posts a message in a dedicated Slack channel tagging the right decision-makers." },
+  { id:27, title:"Salesforce Exchange Rate Updater + Flex Commission Diagnostic", author:"Amy", day:"thu", problem:"(1) Monthly Salesforce exchange rate updates are manual and error-prone. (2) Diagnosing Flex Commission issues requires deep knowledge of PI's technical docs, Apex flows, and past bug history.", solution:"(1) Confirmation-gated tool that accepts a CSV upload, previews all rates, updates CurrencyType conversion rates one at a time with automatic retry logic for RSF lock errors, creates DatedConversionRate records, and generates a success/failure summary. (2) Diagnostic tool covering 4 issue types — users pick the type, answer targeted questions, and get a diagnosis with exact fix steps, Salesforce navigation, and ticket references." },
+  { id:28, title:"Lab Structure Evaluation via JIRA + PI Profiles", author:"Matt", day:"thu", problem:"New lab structure and people moving to H2 introduced organizational and delivery risks that weren't easy to visualize.", solution:"Had Claude evaluate the new lab structure using JIRA work history, PI reference profiles via PI Assistant MCP, and new risk areas from H2 transitions. Also surfaced insights on upcoming PRSP rotations that could reduce risk." },
+  { id:29, title:"Enterpret + Pendo Combined Dashboard", author:"Kaylee", day:"thu", problem:"Sentiment data and usage data lived in separate tools, making it hard to prioritize product work holistically.", solution:"Built a dashboard combining sentiment data from Enterpret with usage data from Pendo so signals can be evaluated side by side." },
+  { id:30, title:"Agent Cockpit", author:"Tyler", day:"thu", problem:"The team doesn't fully utilize available agentic tools (GitHub Copilot agents, Devin, Claude, etc.) and there's no central place to coordinate them.", solution:"Building a browser-based interface to manage agentic workflows across tools and assign agents to work on PRs together with a button click. Plans to deploy to GitHub Pages with API token auth and per-user usage tracking." },
+  { id:31, title:"Test Steps Generator", author:"Sam Hoffman", day:"fri", problem:"BizApps team needed a faster way to generate QA test steps from context spread across Jira, Claude, Miro, and Guru.", solution:"Built a Claude Artifact form that pulls context from those sources and produces fully editable, exportable test steps. Export format is specifically designed for BrowserStack, and Sam shared the code so other teams can adapt it." },
+  { id:32, title:'"Client Passport" Prototype', author:"Tyler + team", day:"fri", problem:"Getting a full picture of a client before a QBR or renewal means pinging multiple people — cases in UserOps, workshop notes with Facilitators, Salesforce data with C&S.", solution:"Built a Client Passport with everything in one view: full interaction timeline, Salesforce opportunities/account data, Domo usage signals, contract info, churn risk, and a Case Focus panel. Demo loaded with five fictional companies." },
+  { id:33, title:"Case Intelligence Engine", author:"Faridah Bori (solo)", day:"fri", problem:"Support cases require significant upfront context gathering from multiple sources (email threads, API errors, user permissions, case history, doc center) before any troubleshooting can begin.", solution:"Built a v1 engine where you give it a case number and it scrubs multiple sources simultaneously, consolidates everything into one view, and provides suggested next steps plus a draft reply." },
+  { id:34, title:'"Meeting Maximizer" Org Skill', author:"Chris Evans, Marley, Russ, Charisse", day:"fri", problem:"Meeting prep requires pulling PI behavioral data, checking scheduling context, and reviewing prior discussions — all manually.", solution:"Built a Claude org skill (/meeting-maximizer) that interviews the user about their meeting, pulls BA profiles and relationship guides via PI Assistant MCP, checks Slack/Calendar/Zoom for prior context, and generates a branded Meeting Brief with agenda, team dynamics analysis, and facilitator tips." },
+  { id:35, title:"Team Knowledge Assistant", author:"Faridah + Team Otter", day:"fri", problem:"Knowledge lives everywhere — Guru, Slack, Drive, Salesforce, Intercom — and is hard to surface without knowing the exact keyword.", solution:"Built a tool that searches all five systems simultaneously using a single query. Handles internal terminology (PI Pro = job assessment, XP Survey = Diagnose, etc.) and outputs format-appropriate answers: quick answer, drafted partner reply, or one-pager. Cites source doc and last updated date." },
+  { id:36, title:"Maverick Pre-Send Checklist", author:"McCracken + Maverick Team 1", day:"fri", problem:"Mavericks (a PI reference profile) can sometimes communicate in ways that don't land well with other reference profiles.", solution:"Built an interactive HTML checklist tool where you select the recipient's reference profile and a few other options, and Claude provides feedback and suggested revisions before you send." },
+  { id:37, title:'"PI Knowledge Finder"', author:"Controller Team", day:"fri", problem:"When a ticket, case, or question arrives, teams start from scratch even when the answer already exists in Guru, Slack, Drive, or a closed Salesforce case.", solution:"Built a tool where you paste any question, ticket, or case (case numbers auto-detected for direct Salesforce lookup), pick your role, and it runs parallel searches across Guru, all Slack channels, Google Drive, and Salesforce case history. Returns one synthesized answer with confidence rating, cited sources with freshness dates, and a role-appropriate next step." },
+  { id:38, title:"Micro-Mental Reset App", author:"Taylor + Team Specialist", day:"fri", problem:"Constant context-switching between meetings, projects, Slack, and tools causes cognitive fatigue.", solution:"Built a POC in Claude Design for a micro-mental reset app that pulls each person's PI behavioral data and recommends psychology-backed reset techniques tailored to their profile (posture resets, quick win logging, offloading worry loops, etc.)." },
+  { id:39, title:"Pre-Meeting Intelligence Brief", author:"Tyler + Collaborator Team", day:"fri", problem:"Meeting prep requires manually gathering behavioral profiles, checking relationships, and surfacing relevant Slack context for each attendee.", solution:"Built a prototype using PI Assistant + Slack MCP that auto-generates a full brief: behavioral flip cards (ABCDE profiles per person), an interactive Chemistry Web node graph showing PI Relationship Guides for every attendee pair, real recent Slack activity per person, team composition maps, and a draggable Prep Board with conversation starters. All data is live." },
+  { id:40, title:"pi-jira-slack-search Skill", author:"Cat Berean + team", day:"fri", problem:"Triaging bugs requires manually searching JIRA tickets and then separately digging through Slack channels.", solution:"Built a skill that searches Jira and Slack simultaneously with a single keyword or symptom description. Returns matching Jira bugs (with status, workaround, links) alongside related Slack threads grouped by relevance (exact match, same feature, background context) with dates. Also lets you post related Slack threads to the Jira ticket as a comment — with approval required before anything posts." },
+  { id:41, title:"/high-d-filter Skill", author:"Kegan Leissner, Caroline Morrissey, Stephanie R", day:"fri", problem:"Brain-dumping a great idea into Slack tends to leave out every detail that actually matters — the research, the leadership context, the 'has leadership seen this?' type questions a structured pitch needs.", solution:"Skill takes a raw idea, automatically searches Enterpret + Slack for relevant context, then walks the user through the structured questions a High D brain always asks. Output: a pitch that lands structured, researched, and ready before you hit send. Low D energy in, High D output out. Still a work in progress — try /high-d-filter." }
+];
+
+// Build lookup map for O(1) access
+const buildsById = {};
+builds.forEach(b => buildsById[b.id] = b);
+
+// ---- STATE ----
+let currentJudge = null;
+let activeFilter = 'all';
+let allVotes = {};
+let allJudges = [];
+let lastVotesHash = '';
+let lastJudgesHash = '';
+let saveQueued = false;
+let saveInProgress = false;
+let cardElementsById = {}; // track DOM nodes for in-place updates
+
+const VOTES_KEY = 'accelerator-votes-v3';
+const JUDGES_KEY = 'accelerator-judges-v3';
+
+// ---- GOOGLE SHEETS BACKEND (source of truth) ----
+const SHEET_API_URL = 'https://script.google.com/macros/s/AKfycbxpYNLNFfPIKUGy0o4nCP2CToCOqqIx2sV2VYflbkqoYNzoa-TH6AwdFpbfm6pfwcM/exec';
+
+// Track in-flight per-vote POSTs so polling doesn't clobber unsaved local edits
+const pendingPosts = new Map(); // key: `${buildId}:${judge}` -> { superlative, rating, writeinLabel }
+
+async function fetchFromSheet() {
+  try {
+    const r = await fetch(SHEET_API_URL, { method: 'GET' });
+    if (!r.ok) return null;
+    const data = await r.json();
+    return data; // { votes, judges }
+  } catch (e) {
+    console.error('Sheet fetch failed:', e);
+    return null;
+  }
+}
+
+// Post a single vote to the sheet. Use text/plain to avoid CORS preflight.
+async function postToSheet(buildId, judge, superlative, rating, writeinLabel) {
+  const key = `${buildId}:${judge}`;
+  const payload = {
+    buildId: parseInt(buildId),
+    judge,
+    superlative: superlative || '',
+    rating: rating || 0,
+    writeinLabel: writeinLabel || ''
+  };
+  pendingPosts.set(key, payload);
+  try {
+    await fetch(SHEET_API_URL, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+      // Note: no Content-Type header — defaults to text/plain (no preflight)
+    });
+    // Only clear pending if the data hasn't changed since we sent it
+    const current = pendingPosts.get(key);
+    if (current && current.superlative === payload.superlative
+        && current.rating === payload.rating
+        && current.writeinLabel === payload.writeinLabel) {
+      pendingPosts.delete(key);
+    }
+    return true;
+  } catch (e) {
+    console.error('Sheet POST failed:', e);
+    // Leave it in pendingPosts so polling can detect the discrepancy and retry won't get clobbered
+    return false;
+  }
+}
+
+// Load with priority: sheet first, fall back to local cache. Migrate local-only votes up.
+async function loadVotesUnified() {
+  // Try sheet first
+  setSaveStatus('saving');
+  const sheetData = await fetchFromSheet();
+
+  // Always read local for migration check
+  let localVotes = {};
+  try {
+    const r = await window.storage.get(VOTES_KEY, true);
+    if (r && r.value) localVotes = JSON.parse(r.value);
+  } catch (e) {}
+
+  if (sheetData) {
+    // Sheet is reachable — it's the source of truth
+    allVotes = sheetData.votes || {};
+    if (sheetData.judges) {
+      for (const j of sheetData.judges) {
+        if (!allJudges.includes(j)) allJudges.push(j);
+      }
+    }
+
+    // Migrate: any local vote that's not in the sheet gets pushed up
+    let migrated = 0;
+    for (const buildId in localVotes) {
+      for (const judge in localVotes[buildId]) {
+        const local = localVotes[buildId][judge];
+        const onSheet = allVotes[buildId] && allVotes[buildId][judge];
+        if (!onSheet) {
+          if (!allVotes[buildId]) allVotes[buildId] = {};
+          allVotes[buildId][judge] = local;
+          // Fire-and-forget POST to sheet
+          postToSheet(buildId, judge, local.superlative, local.rating, local.writeinLabel);
+          if (!allJudges.includes(judge)) allJudges.push(judge);
+          migrated++;
+        }
+      }
+    }
+    if (migrated > 0) {
+      console.log(`Migrated ${migrated} local-only vote(s) up to the sheet.`);
+    }
+
+    // Update local cache to match unified state
+    try { await window.storage.set(VOTES_KEY, JSON.stringify(allVotes), true); } catch (e) {}
+    setSaveStatus('saved');
+    return true;
+  } else {
+    // Sheet unreachable — fall back to local cache and warn
+    console.warn('Sheet unreachable, using local cache as fallback.');
+    allVotes = localVotes;
+    setSaveStatus('error');
+    return false;
+  }
+}
+
+// ---- STORAGE ----
+async function loadVotes() {
+  try {
+    const r = await window.storage.get(VOTES_KEY, true);
+    if (r && r.value) allVotes = JSON.parse(r.value);
+  } catch (e) {}
+}
+
+// Debounced background save — UI never waits
+async function saveVotes() {
+  if (saveInProgress) { saveQueued = true; return; }
+  saveInProgress = true;
+  setSaveStatus('saving');
+  try {
+    await window.storage.set(VOTES_KEY, JSON.stringify(allVotes), true);
+    setSaveStatus('saved');
+  } catch (e) {
+    console.error('Save failed', e);
+    setSaveStatus('error');
+  }
+  saveInProgress = false;
+  if (saveQueued) {
+    saveQueued = false;
+    saveVotes();
+  }
+}
+
+// Save status indicator
+function setSaveStatus(state) {
+  const el = document.getElementById('saveIndicator');
+  if (!el) return;
+  if (state === 'saving') {
+    el.className = 'save-indicator saving';
+    el.innerHTML = '<span class="save-indicator-dot"></span>Saving…';
+  } else if (state === 'saved') {
+    el.className = 'save-indicator flash';
+    el.innerHTML = '<span class="save-indicator-dot"></span>All votes saved';
+    setTimeout(() => {
+      const e = document.getElementById('saveIndicator');
+      if (e) {
+        e.className = 'save-indicator';
+        e.innerHTML = '<span class="save-indicator-dot"></span>All votes saved';
+      }
+    }, 1500);
+  } else if (state === 'error') {
+    el.className = 'save-indicator';
+    el.innerHTML = '<span class="save-indicator-dot" style="background:#DA0C35;"></span>Save failed — check connection';
+  }
+}
+
+async function loadJudges() {
+  try {
+    const r = await window.storage.get(JUDGES_KEY, true);
+    if (r && r.value) allJudges = JSON.parse(r.value);
+  } catch (e) {}
+}
+
+async function registerJudge(name) {
+  await loadJudges();
+  if (!allJudges.includes(name)) {
+    allJudges.push(name);
+    try { await window.storage.set(JUDGES_KEY, JSON.stringify(allJudges), true); }
+    catch (e) {}
+  }
+}
+
+// ---- HELPERS ----
+function getVote(buildId, judge) {
+  if (!judge || !allVotes[buildId] || !allVotes[buildId][judge]) return { superlative: null, rating: 0, writeinLabel: '' };
+  const v = allVotes[buildId][judge];
+  return { superlative: v.superlative || null, rating: v.rating || 0, writeinLabel: v.writeinLabel || '' };
+}
+
+function getConsensus(buildId, superlative) {
+  if (!allVotes[buildId]) return { count: 0, avgRating: 0, totalScore: 0, judges: [] };
+  const judges = [];
+  let sumRating = 0;
+  const buildVotes = allVotes[buildId];
+  for (const judge in buildVotes) {
+    const vote = buildVotes[judge];
+    if (vote.superlative === superlative) {
+      judges.push({ name: judge, rating: vote.rating });
+      sumRating += vote.rating || 0;
+    }
+  }
+  const count = judges.length;
+  return { count, avgRating: count > 0 ? sumRating / count : 0, totalScore: sumRating, judges };
+}
+
+// Group write-ins by their label (case-insensitive) for a build.
+// Returns array of { label, count, avgRating, totalScore, judges } sorted by total score.
+function getWriteinGroups(buildId) {
+  if (!allVotes[buildId]) return [];
+  const groups = {}; // lowerLabel -> { displayLabel, judges:[{name, rating}], sum }
+  for (const judge in allVotes[buildId]) {
+    const vote = allVotes[buildId][judge];
+    if (vote.superlative !== 'writein' || !vote.writeinLabel) continue;
+    const key = vote.writeinLabel.trim().toLowerCase();
+    if (!groups[key]) groups[key] = { displayLabel: vote.writeinLabel.trim(), judges: [], sum: 0 };
+    groups[key].judges.push({ name: judge, rating: vote.rating || 0 });
+    groups[key].sum += vote.rating || 0;
+  }
+  return Object.values(groups).map(g => ({
+    label: g.displayLabel,
+    count: g.judges.length,
+    avgRating: g.judges.length > 0 ? g.sum / g.judges.length : 0,
+    totalScore: g.sum,
+    judges: g.judges
+  })).sort((a, b) => b.totalScore - a.totalScore);
+}
+
+// Sum total score across write-ins for a build
+function getWriteinTotalScore(buildId) {
+  return getWriteinGroups(buildId).reduce((sum, g) => sum + g.totalScore, 0);
+}
+
+function getBestSuperlative(buildId) {
+  let best = null; let bestScore = 0;
+  ['surprise', 'classic', 'collab'].forEach(sup => {
+    const c = getConsensus(buildId, sup);
+    if (c.totalScore > bestScore) { bestScore = c.totalScore; best = sup; }
+  });
+  const writeinScore = getWriteinTotalScore(buildId);
+  if (writeinScore > bestScore) { bestScore = writeinScore; best = 'writein'; }
+  return { superlative: best, score: bestScore };
+}
+
+// Track which cards have the write-in input open (per session, per browser)
+const openWriteins = new Set();
+
+// ---- CARD CONTENT ----
+function buildCardHTML(b, rank) {
+  const myVote = getVote(b.id, currentJudge);
+  const surpriseC = getConsensus(b.id, 'surprise');
+  const classicC = getConsensus(b.id, 'classic');
+  const collabC = getConsensus(b.id, 'collab');
+  const writeinGroups = getWriteinGroups(b.id);
+  const youVoted = myVote.superlative !== null || myVote.rating > 0;
+
+  // Collect all voters for the voters-row
+  const allVoters = [];
+  if (allVotes[b.id]) {
+    for (const judge in allVotes[b.id]) {
+      const v = allVotes[b.id][judge];
+      allVoters.push({ name: judge, superlative: v.superlative, rating: v.rating || 0, writeinLabel: v.writeinLabel });
+    }
+  }
+
+  const sups = [
+    { key: 'surprise', label: '🏆 Most Surprising', consensus: surpriseC, icon: '🏆', short: 'Surprising' },
+    { key: 'classic', label: '🔁 Instant Classic', consensus: classicC, icon: '🔁', short: 'Classic' },
+    { key: 'collab', label: '🤝 Collab Energy', consensus: collabC, icon: '🤝', short: 'Collab' },
+  ];
+
+  const rankBadge = rank ? `<div class="rank-badge">#${rank}</div>` : '';
+
+  // Superlative buttons
+  let supButtons = '';
+  for (const s of sups) {
+    supButtons += `<button class="superlative-btn ${myVote.superlative === s.key ? 'selected' : ''}" data-action="sup" data-sup="${s.key}" data-build="${b.id}">${s.label}</button>`;
+  }
+  const writeinSelected = myVote.superlative === 'writein';
+  const writeinBtnLabel = writeinSelected && myVote.writeinLabel
+    ? `✍️ "${escapeHtml(myVote.writeinLabel)}"`
+    : '✍️ Write-in';
+  supButtons += `<button class="superlative-btn ${writeinSelected ? 'selected' : ''}" data-action="writein-open" data-sup="writein" data-build="${b.id}">${writeinBtnLabel}</button>`;
+
+  // Star buttons
+  let stars = '';
+  for (let n = 1; n <= 5; n++) {
+    stars += `<button class="star-btn ${myVote.rating >= n ? 'filled' : ''}" data-action="star" data-rating="${n}" data-build="${b.id}" aria-label="${n}">★</button>`;
+  }
+
+  const clearBtn = youVoted
+    ? `<button class="clear-btn" data-action="clear" data-build="${b.id}">Clear my vote</button>` : '';
+
+  // Inline write-in input
+  const writeinInputRow = openWriteins.has(b.id)
+    ? `<div class="writein-input-row">
+        <input class="writein-input" type="text" placeholder="Your custom superlative (e.g., Most Useful)" maxlength="40" data-writein-input="${b.id}" value="${escapeHtml(myVote.writeinLabel || '')}" />
+        <button class="writein-submit-btn" data-action="writein-submit" data-build="${b.id}">Save</button>
+        <button class="writein-cancel-btn" data-action="writein-cancel" data-build="${b.id}">Cancel</button>
+      </div>`
+    : '';
+
+  // Voters row — circles of who voted
+  let votersHTML = '';
+  if (allVoters.length === 0) {
+    votersHTML = `<div class="voters-empty">No votes yet — be the first.</div>`;
+  } else {
+    let circles = '';
+    // Sort: you first, then others
+    const sortedVoters = allVoters.slice().sort((a, b) => {
+      if (a.name === currentJudge) return -1;
+      if (b.name === currentJudge) return 1;
+      return 0;
+    });
+    for (const v of sortedVoters) {
+      const initial = v.name.charAt(0).toUpperCase();
+      const isYou = v.name === currentJudge;
+      const tooltip = `${isYou ? 'You' : v.name}: ${v.superlative === 'writein' ? `"${v.writeinLabel || ''}"` : (v.superlative || 'no superlative')}${v.rating ? ` · ${v.rating}★` : ''}`;
+      circles += `<div class="voter-circle ${isYou ? 'you' : ''}" data-sup="${v.superlative || 'none'}" title="${escapeHtml(tooltip)}">${initial}</div>`;
+    }
+    const totalJudges = allJudges.length;
+    const summaryText = `<strong>${allVoters.length}</strong> of <strong>${totalJudges}</strong> ${totalJudges === 1 ? 'judge' : 'judges'} voted`;
+    votersHTML = `
+      <div class="voters-circles">${circles}</div>
+      <div class="voters-summary">${summaryText}</div>
+    `;
+  }
+
+  // Consensus rows (per-category breakdowns)
+  let consensusRows = '';
+  for (const s of sups) {
+    if (s.consensus.count === 0) continue;
+    const sortedJudges = s.consensus.judges.slice().sort((a, b) => b.rating - a.rating);
+    let judgesStr = '';
+    for (let i = 0; i < sortedJudges.length; i++) {
+      const j = sortedJudges[i];
+      const name = j.name === currentJudge ? 'You' : j.name;
+      judgesStr += (i > 0 ? ', ' : '') + `${name} (${j.rating}★)`;
+    }
+    consensusRows += `
+      <div class="consensus-row">
+        <span class="consensus-tag" data-sup="${s.key}">${s.icon} ${s.short}</span>
+        <span class="consensus-stats"><strong>${s.consensus.count}</strong> ${s.consensus.count === 1 ? 'vote' : 'votes'} · avg <strong>${s.consensus.avgRating.toFixed(1)}★</strong></span>
+        <span class="consensus-judges">${judgesStr}</span>
+      </div>`;
+  }
+  for (const g of writeinGroups) {
+    const sortedJudges = g.judges.slice().sort((a, b) => b.rating - a.rating);
+    let judgesStr = '';
+    for (let i = 0; i < sortedJudges.length; i++) {
+      const j = sortedJudges[i];
+      const name = j.name === currentJudge ? 'You' : j.name;
+      judgesStr += (i > 0 ? ', ' : '') + `${name} (${j.rating}★)`;
+    }
+    consensusRows += `
+      <div class="consensus-row">
+        <span class="consensus-tag" data-sup="writein">✍️ "${escapeHtml(g.label)}"</span>
+        <span class="consensus-stats"><strong>${g.count}</strong> ${g.count === 1 ? 'vote' : 'votes'} · avg <strong>${g.avgRating.toFixed(1)}★</strong></span>
+        <span class="consensus-judges">${judgesStr}</span>
+      </div>`;
+  }
+  const consensusHTML = consensusRows ? `<div class="consensus">${consensusRows}</div>` : '';
+
+  return {
+    youVoted,
+    html: `
+      ${rankBadge}
+      <div class="card-meta">
+        <span>#${b.id}</span>
+        <span class="card-day">${b.day === 'thu' ? 'Thursday' : 'Friday'}</span>
+      </div>
+      <h2 class="card-title">${b.title}</h2>
+      <div class="card-section">
+        <span class="card-section-label">Problem</span>
+        ${b.problem}
+      </div>
+      <div class="card-section">
+        <span class="card-section-label">Solution</span>
+        ${b.solution}
+      </div>
+      <div class="vote-panel">
+        <span class="vote-panel-label">Your vote</span>
+        <div class="superlative-picker">${supButtons}</div>
+        <div class="star-row">
+          <span class="star-row-label">Rating:</span>
+          <div class="star-rating">${stars}</div>
+          ${clearBtn}
+        </div>
+        ${writeinInputRow}
+      </div>
+      <div class="voters-row">
+        ${votersHTML}
+      </div>
+      ${consensusHTML}
+    `
+  };
+}
+
+// HTML-escape helper
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function makeCardElement(b, rank) {
+  const card = document.createElement('div');
+  const { youVoted, html } = buildCardHTML(b, rank);
+  card.className = 'card' + (youVoted ? ' you-voted' : '');
+  card.dataset.buildId = b.id;
+  card.innerHTML = html;
+  cardElementsById[b.id] = card;
+  return card;
+}
+
+// Update one card in place — fast, no full re-render
+function updateCardInPlace(buildId) {
+  const card = cardElementsById[buildId];
+  if (!card) return;
+  const b = buildsById[buildId];
+  const existingRank = card.querySelector('.rank-badge');
+  const rank = existingRank ? parseInt(existingRank.textContent.replace('#', '')) : null;
+  const { youVoted, html } = buildCardHTML(b, rank);
+  card.className = 'card' + (youVoted ? ' you-voted' : '');
+  card.innerHTML = html;
+}
+
+// Count how many builds the current judge has voted on
+function getMyVotedCount() {
+  if (!currentJudge) return 0;
+  let count = 0;
+  for (const buildId in allVotes) {
+    if (allVotes[buildId][currentJudge]) count++;
+  }
+  return count;
+}
+
+// Update stats + progress bar
+function updateStats(visibleCount) {
+  let totalRatings = 0;
+  for (const buildId in allVotes) {
+    for (const judge in allVotes[buildId]) {
+      if (allVotes[buildId][judge].rating > 0) totalRatings++;
+    }
+  }
+  if (visibleCount !== undefined) document.getElementById('visibleCount').textContent = visibleCount;
+  document.getElementById('totalRatings').textContent = totalRatings;
+  document.getElementById('judgeCount').textContent = allJudges.length;
+
+  // Progress bar
+  const myCount = getMyVotedCount();
+  const total = builds.length;
+  const pct = total > 0 ? (myCount / total) * 100 : 0;
+  const progressVoted = document.getElementById('progressVoted');
+  const progressTotal = document.getElementById('progressTotal');
+  const progressFill = document.getElementById('progressFill');
+  const progressSection = document.getElementById('progressSection');
+  if (progressVoted) progressVoted.textContent = myCount;
+  if (progressTotal) progressTotal.textContent = total;
+  if (progressFill) progressFill.style.width = pct.toFixed(1) + '%';
+  if (progressSection && currentJudge) progressSection.style.display = 'block';
+}
+
+function updateJudgeBar() {
+  const bar = document.getElementById('bottomBar');
+  const chips = document.getElementById('judgeChips');
+  if (allJudges.length === 0) return;
+  bar.classList.add('visible');
+  let html = '';
+  for (const n of allJudges) {
+    html += `<span class="judge-chip${n === currentJudge ? ' you' : ''}">${n === currentJudge ? n + ' (you)' : n}</span>`;
+  }
+  chips.innerHTML = html;
+}
+
+// ---- FULL RENDER (filter changes / initial load / external updates) ----
+function renderAll() {
+  const grid = document.getElementById('grid');
+  cardElementsById = {};
+  const frag = document.createDocumentFragment();
+
+  const filtered = builds.filter(b => {
+    if (activeFilter === 'all') return true;
+    if (activeFilter === 'my-votes') {
+      const v = getVote(b.id, currentJudge);
+      return v.superlative !== null || v.rating > 0;
+    }
+    if (activeFilter === 'thu') return b.day === 'thu';
+    if (activeFilter === 'fri') return b.day === 'fri';
+    if (activeFilter === 'writein') return getWriteinGroups(b.id).length > 0;
+    return getConsensus(b.id, activeFilter).count > 0;
+  });
+
+  let sorted;
+  if (['surprise', 'classic', 'collab'].includes(activeFilter)) {
+    sorted = filtered.slice().sort((a, b) => {
+      const aScore = getConsensus(a.id, activeFilter).totalScore;
+      const bScore = getConsensus(b.id, activeFilter).totalScore;
+      return bScore - aScore || a.id - b.id;
+    });
+  } else if (activeFilter === 'writein') {
+    sorted = filtered.slice().sort((a, b) => {
+      const aScore = getWriteinTotalScore(a.id);
+      const bScore = getWriteinTotalScore(b.id);
+      return bScore - aScore || a.id - b.id;
+    });
+  } else {
+    sorted = filtered.slice().sort((a, b) => {
+      if (activeFilter !== 'my-votes' && a.day !== b.day) return a.day === 'thu' ? -1 : 1;
+      const aScore = getBestSuperlative(a.id).score;
+      const bScore = getBestSuperlative(b.id).score;
+      return bScore - aScore || a.id - b.id;
+    });
+  }
+
+  if (activeFilter === 'all') {
+    const thu = sorted.filter(b => b.day === 'thu');
+    const fri = sorted.filter(b => b.day === 'fri');
+    if (thu.length > 0) {
+      const lbl = document.createElement('div');
+      lbl.className = 'section-label';
+      lbl.textContent = 'Thursday, April 30 — Build Showcase';
+      frag.appendChild(lbl);
+      thu.forEach(b => frag.appendChild(makeCardElement(b, null)));
+    }
+    if (fri.length > 0) {
+      const lbl = document.createElement('div');
+      lbl.className = 'section-label';
+      lbl.textContent = 'Friday, May 1 — Team Hack Day';
+      frag.appendChild(lbl);
+      fri.forEach(b => frag.appendChild(makeCardElement(b, null)));
+    }
+  } else if (['surprise', 'classic', 'collab', 'writein'].includes(activeFilter)) {
+    sorted.forEach((b, i) => frag.appendChild(makeCardElement(b, i + 1)));
+  } else {
+    sorted.forEach(b => frag.appendChild(makeCardElement(b, null)));
+  }
+
+  grid.replaceChildren(frag);
+  updateStats(filtered.length);
+  updateJudgeBar();
+}
+
+// ---- VOTE ACTIONS (instant UI, background save) ----
+function setVote(buildId, superlative, rating, writeinLabel) {
+  if (!allVotes[buildId]) allVotes[buildId] = {};
+  if (superlative === null && rating === 0) {
+    delete allVotes[buildId][currentJudge];
+    if (Object.keys(allVotes[buildId]).length === 0) delete allVotes[buildId];
+  } else {
+    const v = { superlative, rating };
+    if (superlative === 'writein' && writeinLabel) v.writeinLabel = writeinLabel;
+    allVotes[buildId][currentJudge] = v;
+  }
+  updateCardInPlace(buildId);
+  updateStats();
+  // Local cache (fast, redundant)
+  saveVotes();
+  // Sheet (source of truth) — fire-and-forget
+  postToSheet(buildId, currentJudge, superlative, rating, writeinLabel);
+  lastVotesHash = JSON.stringify(allVotes);
+}
+
+// ---- EVENT DELEGATION (one listener for whole grid) ----
+document.getElementById('grid').addEventListener('click', (e) => {
+  const target = e.target.closest('[data-action]');
+  if (!target) return;
+  const action = target.dataset.action;
+  const buildId = parseInt(target.dataset.build);
+  const v = getVote(buildId, currentJudge);
+
+  if (action === 'sup') {
+    const sup = target.dataset.sup;
+    // Selecting a non-writein clears any open writein input
+    openWriteins.delete(buildId);
+    setVote(buildId, v.superlative === sup ? null : sup, v.rating);
+  } else if (action === 'star') {
+    const rating = parseInt(target.dataset.rating);
+    setVote(buildId, v.superlative, v.rating === rating ? 0 : rating, v.writeinLabel);
+  } else if (action === 'clear') {
+    openWriteins.delete(buildId);
+    setVote(buildId, null, 0);
+  } else if (action === 'writein-open') {
+    // Toggle the inline input
+    if (openWriteins.has(buildId)) {
+      openWriteins.delete(buildId);
+    } else {
+      openWriteins.add(buildId);
+    }
+    updateCardInPlace(buildId);
+    // Focus the input after re-render
+    if (openWriteins.has(buildId)) {
+      setTimeout(() => {
+        const input = document.querySelector(`[data-writein-input="${buildId}"]`);
+        if (input) { input.focus(); input.select(); }
+      }, 0);
+    }
+  } else if (action === 'writein-submit') {
+    const input = document.querySelector(`[data-writein-input="${buildId}"]`);
+    const label = input ? input.value.trim() : '';
+    if (label) {
+      openWriteins.delete(buildId);
+      setVote(buildId, 'writein', v.rating, label);
+    }
+  } else if (action === 'writein-cancel') {
+    openWriteins.delete(buildId);
+    updateCardInPlace(buildId);
+  }
+});
+
+// Enter / Escape inside the write-in input
+document.getElementById('grid').addEventListener('keydown', (e) => {
+  const input = e.target.closest('[data-writein-input]');
+  if (!input) return;
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    const buildId = parseInt(input.dataset.writeinInput);
+    const label = input.value.trim();
+    if (label) {
+      const v = getVote(buildId, currentJudge);
+      openWriteins.delete(buildId);
+      setVote(buildId, 'writein', v.rating, label);
+    }
+  } else if (e.key === 'Escape') {
+    const buildId = parseInt(input.dataset.writeinInput);
+    openWriteins.delete(buildId);
+    updateCardInPlace(buildId);
+  }
+});
+
+// ---- FILTERS ----
+document.getElementById('filters').addEventListener('click', (e) => {
+  const btn = e.target.closest('.filter-btn');
+  if (!btn) return;
+  if (btn.classList.contains('active')) return; // no-op
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  activeFilter = btn.dataset.filter;
+  renderAll();
+});
+
+// ---- ONBOARDING ----
+const nameInput = document.getElementById('nameInput');
+const nameSubmit = document.getElementById('nameSubmit');
+const onboarding = document.getElementById('onboarding');
+
+nameInput.addEventListener('input', () => {
+  nameSubmit.disabled = !nameInput.value.trim();
+});
+nameInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && nameInput.value.trim()) startJudging();
+});
+nameSubmit.addEventListener('click', startJudging);
+
+function openOnboarding(prefill = '') {
+  onboarding.classList.remove('hidden');
+  document.getElementById('onboardingTitle').textContent = currentJudge ? 'Switch judge' : 'Judging Tool';
+  document.getElementById('onboardingMsg').textContent = currentJudge
+    ? 'Enter a different name, or change yours.'
+    : 'Enter your first name so the team can see who voted for what. Votes sync across all judges.';
+  nameInput.value = prefill;
+  nameSubmit.disabled = !prefill.trim();
+  setTimeout(() => nameInput.focus(), 50);
+}
+
+async function startJudging() {
+  const name = nameInput.value.trim();
+  if (!name) return;
+  const isSwitching = currentJudge !== null && currentJudge !== name;
+  currentJudge = name;
+  onboarding.classList.add('hidden');
+  document.getElementById('loadingState').textContent = 'Loading votes from the sheet…';
+
+  // Render header now (so save indicator is visible)
+  const judgeRow = document.getElementById('judgeRow');
+  judgeRow.innerHTML = `
+    <div class="judge-badge">Judging as ${escapeHtml(name)}</div>
+    <button class="switch-judge-btn" id="switchBtn">Switch judge</button>
+    <div class="save-indicator" id="saveIndicator">
+      <span class="save-indicator-dot"></span>Connecting…
+    </div>
+  `;
+  document.getElementById('switchBtn').addEventListener('click', () => openOnboarding());
+
+  // Register judge locally so they appear immediately
+  await registerJudge(name);
+
+  // Sheet is source of truth (with local cache fallback + migration)
+  await loadVotesUnified();
+
+  // Also push the registered judge to sheet by posting a no-op if they have no votes yet
+  // Actually skipping — they'll appear in the sheet judges list as soon as they cast a vote
+
+  lastVotesHash = JSON.stringify(allVotes);
+  lastJudgesHash = JSON.stringify(allJudges);
+  document.getElementById('loadingState').style.display = 'none';
+  renderAll();
+}
+
+// ---- EXPORT / IMPORT (backup safety net) ----
+document.getElementById('exportBtn').addEventListener('click', () => {
+  const payload = {
+    exportedAt: new Date().toISOString(),
+    judges: allJudges,
+    votes: allVotes,
+    version: 'v3'
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+  a.download = `accelerator-votes-${ts}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+});
+
+document.getElementById('importBtn').addEventListener('click', () => {
+  document.getElementById('importFile').click();
+});
+
+document.getElementById('importFile').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  try {
+    const text = await file.text();
+    const data = JSON.parse(text);
+    if (!data.votes || !data.judges) {
+      alert('That file does not look like a valid backup. Expected fields: votes, judges.');
+      return;
+    }
+    const voteCount = Object.values(data.votes).reduce((s, jm) => s + Object.keys(jm).length, 0);
+    const ok = confirm(`Import ${voteCount} vote(s) from ${data.judges.length} judge(s)? This will MERGE with current votes — existing entries with the same judge + build will be overwritten.`);
+    if (!ok) { e.target.value = ''; return; }
+
+    // Merge votes
+    for (const buildId in data.votes) {
+      if (!allVotes[buildId]) allVotes[buildId] = {};
+      Object.assign(allVotes[buildId], data.votes[buildId]);
+    }
+    // Merge judges
+    for (const j of data.judges) {
+      if (!allJudges.includes(j)) allJudges.push(j);
+    }
+    // Persist both
+    await window.storage.set(VOTES_KEY, JSON.stringify(allVotes), true);
+    await window.storage.set(JUDGES_KEY, JSON.stringify(allJudges), true);
+    lastVotesHash = JSON.stringify(allVotes);
+    lastJudgesHash = JSON.stringify(allJudges);
+    renderAll();
+    alert(`Imported. Now tracking ${allJudges.length} judges and ${voteCount} votes.`);
+  } catch (err) {
+    alert('Could not parse that file: ' + err.message);
+  }
+  e.target.value = ''; // reset input so same file can be re-selected later
+});
+
+// ---- SMART POLLING — fetch from sheet, merge with pending writes, only re-render if changed ----
+setInterval(async () => {
+  if (!currentJudge) return;
+  const sheetData = await fetchFromSheet();
+  if (!sheetData) {
+    // Sheet temporarily unreachable; keep going with local state
+    setSaveStatus('error');
+    return;
+  }
+
+  let polledVotes = sheetData.votes || {};
+  const polledJudges = sheetData.judges || [];
+
+  // Apply any in-flight POSTs on top so we don't show stale data for unsaved edits
+  for (const [key, pending] of pendingPosts) {
+    const [bid, judge] = key.split(':');
+    if (!polledVotes[bid]) polledVotes[bid] = {};
+    if (!pending.superlative && !pending.rating) {
+      delete polledVotes[bid][judge];
+      if (Object.keys(polledVotes[bid]).length === 0) delete polledVotes[bid];
+    } else {
+      const v = { superlative: pending.superlative, rating: pending.rating };
+      if (pending.writeinLabel) v.writeinLabel = pending.writeinLabel;
+      polledVotes[bid][judge] = v;
+    }
+  }
+
+  // Merge polled judges into local list
+  for (const j of polledJudges) {
+    if (!allJudges.includes(j)) allJudges.push(j);
+  }
+
+  const newVotesHash = JSON.stringify(polledVotes);
+  const newJudgesHash = JSON.stringify(allJudges);
+  if (newVotesHash !== lastVotesHash || newJudgesHash !== lastJudgesHash) {
+    allVotes = polledVotes;
+    lastVotesHash = newVotesHash;
+    lastJudgesHash = newJudgesHash;
+    // Update local cache with latest sheet state
+    try { await window.storage.set(VOTES_KEY, JSON.stringify(allVotes), true); } catch (e) {}
+    renderAll();
+  }
+  setSaveStatus('saved');
+}, 15000);
+</script>
+</body>
+</html>
